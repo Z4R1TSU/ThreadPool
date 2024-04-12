@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <thread>
+#include <iostream>
 
 const int TASK_MAX_THREASHHOLD = 1024;
 
@@ -50,7 +51,11 @@ void ThreadPool::start(size_t initThreadSize) {
 
 // 因为我们要维护的描述变量都在ThreadPool类当中，所以我们需要一个Helper Function来供Thread来绑定使用
 void ThreadPool::threadFunc() {
+    std::cout << "begin threadFunc" << std::endl;
+    std::cout << "tid: " << std::this_thread::get_id() << std::endl;
 
+    std::cout << "end threadFunc" << std::endl;
+    std::cout << "tid: " << std::this_thread::get_id() << std::endl;
 }
 
 

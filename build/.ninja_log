@@ -1,0 +1,4 @@
+# ninja log v5
+6	1524	7346405641788931	CMakeFiles/test.dir/test.cpp.obj	c3cb37d4321d4210
+10	1654	7346405643121577	CMakeFiles/test.dir/threadpool.cpp.obj	b80f4a5eb8049725
+1654	1808	7346405644554748	test.exe	871a9983276bf566
