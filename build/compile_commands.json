@@ -1,0 +1,14 @@
+[
+{
+  "directory": "E:/MSYS2/home/30786/threadpool/build",
+  "command": "E:\\MSYS2\\mingw64\\bin\\g++.exe   -g -std=gnu++20 -o CMakeFiles\\test.dir\\test.cpp.obj -c E:\\MSYS2\\home\\30786\\threadpool\\test.cpp",
+  "file": "E:/MSYS2/home/30786/threadpool/test.cpp",
+  "output": "CMakeFiles/test.dir/test.cpp.obj"
+},
+{
+  "directory": "E:/MSYS2/home/30786/threadpool/build",
+  "command": "E:\\MSYS2\\mingw64\\bin\\g++.exe   -g -std=gnu++20 -o CMakeFiles\\test.dir\\threadpool.cpp.obj -c E:\\MSYS2\\home\\30786\\threadpool\\threadpool.cpp",
+  "file": "E:/MSYS2/home/30786/threadpool/threadpool.cpp",
+  "output": "CMakeFiles/test.dir/threadpool.cpp.obj"
+}
+]
