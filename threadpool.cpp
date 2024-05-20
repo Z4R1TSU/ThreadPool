@@ -40,7 +40,7 @@ Result ThreadPool::submitTask(std::shared_ptr<Task> sp) {
     auto stat = notFull_.wait_for(lock, std::chrono::seconds(1), [&]() -> bool { return taskQue_.size() < static_cast<size_t>(taskQueMaxThreshHold_); });
     if (!stat) {
         std::cerr << "TimeOut: Task Queue is Full, sumbit task failed" << std::endl;
-        return;
+        return Result(sp, false);
     }
 
     // 将任务放入任务队列当中，并更新
@@ -97,7 +97,7 @@ void ThreadPool::threadFunc() {
 
         // 调用线程执行任务
         if (task != nullptr) {
-            task->run();
+            task->exec();
         }
     }
     // std::cout << "begin threadFunc" << " tid: " << std::this_thread::get_id() << std::endl;
@@ -123,11 +123,28 @@ void Thread::start() {
 }
 
 
+// --------- 实现Task类
+Task::Task()
+    : result_(nullptr)
+{}
+
+void Task::exec() {
+    if (result_ != nullptr) {
+        result_->setVal(run());
+    }
+}
+
+void Task::setResult(Result *res) {
+    result_ = res;
+}
+
+
 // --------- 实现Result类
 Result::Result(std::shared_ptr<Task> task, bool isValid)
     : task_(task),
-      isValid_(isValid)
-{}
+      isValid_(isValid) {
+    task_->setResult(this);
+}
 
 Any Result::get() {
     if (!isValid_) {

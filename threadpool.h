@@ -9,6 +9,9 @@
 #include <condition_variable>
 #include <functional>
 
+class Task;
+class Result;
+
 /*
 example:
 ThreadPool pool;
@@ -41,27 +44,25 @@ public:
 
     // 重载构造函数，使得Any类可以接收任意类型的参数
     template<typename T>
-    Any(T data) {
-        base_ = std::make_unique<Derive<T>>(data);
-    }
+    Any(T data) : base_(std::make_unique<Derive<T>>(data)) {}
 
     // 重载类型转换运算符，使得Any类可以转换为任意类型的参数
     // 通过base_成员变量访问派生类当中的成员变量data_
     template<typename T>
     T cast_() {
         // 智能指针的get方法返回裸指针，需要用dynamic_cast转换为派生类指针
-        Derive<T> *ptr = dynamic_cast<Derive<T>>(base_.get());
-        if (ptr) {
-            return ptr->data_;
+        Derive<T> *ptr = dynamic_cast<Derive<T>*>(base_.get());
+        if (ptr == nullptr) {
+            throw std::bad_cast();
         }
-        throw std::bad_cast();
+        return ptr->data_;
     }
 
 private:
     // 基类实现
     class Base {
     public:
-        // 虚函数的实现
+        // 虚析构函数
         virtual ~Base() = default;
     };
 
@@ -69,7 +70,7 @@ private:
     template<typename T>
     class Derive : public Base {
     public:
-        Derive(T data) : public Base {}
+        Derive(T data) : data_(data) {}
         T data_;
     };
 
@@ -106,7 +107,6 @@ private:
     std::condition_variable cv_;
 };
 
-// 
 class Result {
 public:
     Result() = default;
@@ -116,7 +116,8 @@ public:
     // get方法 用于获取任务的结果
     Any get();
 
-    // setVal方法 
+    // setVal方法
+    void setVal(Any any);
 private:
     Any any_; // 存储任务的结果
     Semaphore sem_; // 信号量，用于通知线程池任务完成
@@ -126,8 +127,16 @@ private:
 
 class Task {
 public:
+    Task();
+    ~Task() = default;
     // 可自定义重载run类型
+    void exec();
+    void setResult(Result *res);
     virtual Any run() = 0;
+
+private:
+    // 为什么用裸指针？因为智能指针不能相互调用(Result类有Task智能指针，Task类如果也用Result智能指针)，不然会造成死锁内存泄露
+    Result *result_; // 指向Result类的指针
 };
 
 enum class PoolMode {
