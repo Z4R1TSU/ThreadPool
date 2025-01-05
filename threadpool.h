@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
+#include <unordered_map>
 
 class Task;
 class Result;
@@ -53,7 +54,7 @@ public:
         // 智能指针的get方法返回裸指针，需要用dynamic_cast转换为派生类指针
         Derive<T> *ptr = dynamic_cast<Derive<T>*>(base_.get());
         if (ptr == nullptr) {
-            throw std::bad_cast();
+            throw "type unmatch!";
         }
         return ptr->data_;
     }
@@ -146,7 +147,7 @@ enum class PoolMode {
 
 class Thread {
 public:
-    using ThreadFunc = std::function<void()>;
+    using ThreadFunc = std::function<void(size_t)>;
 
     // 线程的构造与析构
     Thread(ThreadFunc func);
@@ -154,8 +155,11 @@ public:
 
     // 启动指定线程
     void start();
+    size_t getThreadID() const;
 private:
     ThreadFunc func_;
+    static size_t generateID_;
+    size_t threadID_;
 };
 
 class ThreadPool {
@@ -171,6 +175,9 @@ public:
     
     // 设置任务队列最大阈值
     void setTaskQueMaxThreshHold(size_t Threshhold);
+
+    // 设置cached模式下，线程数量阈值
+    void setThreadThreshHold(size_t threshhold);
     
     // 给线程池提交任务
     Result submitTask(std::shared_ptr<Task> sp);
@@ -183,25 +190,31 @@ public:
 private:
     // Thread类当中的method并不能操作ThreadPool当中维护的变量，这个threadFunc相当于是个桥梁
     // 因为我们要维护的描述变量都在ThreadPool类当中，所以我们需要一个Helper Function来供Thread来绑定使用
-    void threadFunc();
+    void threadFunc(size_t tid);
 
+    bool checkRunningState() const; // 检查线程池是否正在运行，因为如果不封装，每个Threadpool库中的方法都要调用一遍
 private:
     // 使用智能指针，使得当threads_在析构时，自动释放指针的资源
-    std::vector<std::unique_ptr<Thread>> threads_; // 线程池本身
-    size_t initThreadSize_; // 初始线程数量
-    std::queue<std::shared_ptr<Task>> taskQue_; // 任务队列
+    // std::vector<std::unique_ptr<Thread>> threads_;      // 线程池本身
+    std::unordered_map<size_t, std::unique_ptr<Thread>> threads_;       // 线程池本身
+    size_t initThreadSize_;                                             // 初始线程数量
+    std::atomic_int curThreadSize_;                                     // 当前线程数量
+    std::atomic_int idleThreadSize_;                                    // 空闲线程的数量
+    size_t maxThreadSize_;                                              // 最大线程数量上限阈值
+
+    std::queue<std::shared_ptr<Task>> taskQue_;                         // 任务队列
     
     // 原子操作 保证线程安全 轻量的锁 适用于计数器
-    std::atomic_uint taskSize_ {}; // 记录任务的数量
-    size_t taskQueMaxThreshHold_; // 任务数量的最大阈值
+    std::atomic_uint taskSize_ {};                                      // 记录任务的数量
+    size_t taskQueMaxThreshHold_;                                       // 任务数量的最大阈值
 
     // 线程安全
-    std::mutex taskQueMtx_; // 任务队列的互斥锁
-    std::condition_variable notFull_ {}; // 任务队列不满
-    std::condition_variable notEmpty_ {}; // 任务队列不空
+    std::mutex taskQueMtx_;                                             // 任务队列的互斥锁
+    std::condition_variable notFull_ {};                                // 任务队列不满
+    std::condition_variable notEmpty_ {};                               // 任务队列不空
 
-    // 当前线程池的工作模式
-    PoolMode poolMode_;
+    PoolMode poolMode_;                                                 // 当前线程池的工作模式
+    std::atomic_bool isPoolRunning_ {};                                 // 标记线程池是否正在运行
 };
 
 #endif

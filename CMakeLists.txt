@@ -5,8 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 project(MyThreadPool)
 
 # 设置C++标准
-# 因为我们这里会用到C++-17的内容，也可能用到C++-20，保险起见设为20
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 # 添加所有源文件到变量SOURCE
 set(SOURCES
